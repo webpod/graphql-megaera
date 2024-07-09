@@ -24,10 +24,10 @@ type Mutation {
 `)
 
 const source = new Source(`
-query User($login: String!) {
+query User($login: String!, $avatarUrl: String) {
   user(login: $login) {
     name
-    avatar: avatarUrl
+    avatarUrl
   }
 }
 `)

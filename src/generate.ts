@@ -11,7 +11,7 @@ import { Operation, Selector } from './visitor.js'
 export function generate(ops: Operation[]) {
   const code: string[] = []
   for (const q of ops) {
-    code.push(`export type ${q.name} = ${generateSelector(q.select)}
+    code.push(`export type ${q.name} = (${generateVariables(q.variables)}) => ${generateSelector(q.select)}
 
 export const ${q.name} = \`#graphql
 ${q.query}\` as string & ${q.name}
@@ -19,6 +19,21 @@ ${q.query}\` as string & ${q.name}
   }
 
   return code.join('\n\n')
+}
+
+function generateVariables(variables: Record<string, GraphQLType | undefined>) {
+  return (
+    'params: {' +
+    Object.entries(variables)
+      .map(([name, type]) => {
+        if (type === undefined) {
+          return `${name}: unknown`
+        }
+        return `${name}: ${generateType(type)}`
+      })
+      .join(', ') +
+    '}'
+  )
 }
 
 function generateSelector(s: Selector, depth = 0) {

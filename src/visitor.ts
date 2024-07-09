@@ -1,5 +1,13 @@
-import { GraphQLInputType, GraphQLOutputType } from 'graphql/type/definition.js'
-import { TypeInfo, visitWithTypeInfo } from 'graphql/utilities/index.js'
+import {
+  GraphQLInputType,
+  GraphQLOutputType,
+  GraphQLType,
+} from 'graphql/type/definition.js'
+import {
+  typeFromAST,
+  TypeInfo,
+  visitWithTypeInfo,
+} from 'graphql/utilities/index.js'
 import { parse, print, Source, visit } from 'graphql/language/index.js'
 import { GraphQLSchema } from 'graphql/type/index.js'
 import { GraphQLError } from 'graphql/error/index.js'
@@ -8,7 +16,7 @@ import { firstLetterUpper } from './utils.js'
 export type Operation = {
   name: string
   select: Selector
-  variables: Record<string, GraphQLInputType>
+  variables: Record<string, GraphQLType | undefined>
   query: string
 }
 
@@ -42,10 +50,15 @@ export function transform(source: Source, schema: GraphQLSchema): Operation[] {
         }
         stack.push(s)
 
+        const variables: Record<string, GraphQLType | undefined> = {}
+        for (const v of node.variableDefinitions ?? []) {
+          variables[v.variable.name.value] = typeFromAST(schema, v.type)
+        }
+
         ops.push({
           name: node.name.value,
           select: s,
-          variables: {},
+          variables: variables,
           query: print(node),
         })
       },
@@ -53,18 +66,6 @@ export function transform(source: Source, schema: GraphQLSchema): Operation[] {
         stack.pop()
       },
     },
-
-    VariableDefinition: {
-      enter(node) {
-        const s = stack.at(-1)
-        if (s === undefined) {
-          throw new GraphQLError('Variable definition is not allowed here', node, source)
-        }
-        s.variables[node.variable.name.value] = typeInfo.getType()
-      },
-      leave() {
-        stack.pop()
-      },
 
     Field: {
       enter(node) {
