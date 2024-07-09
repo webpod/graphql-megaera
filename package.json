@@ -3,9 +3,6 @@
   "version": "0.0.0",
   "description": "GraphQL TypeScript Generator",
   "type": "module",
-  "imports": {
-    "#/*": "./dist/*"
-  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
