@@ -1,0 +1,46 @@
+{
+  "name": "megaera",
+  "version": "0.0.0",
+  "description": "GraphQL TypeScript Generator",
+  "type": "module",
+  "imports": {
+    "#/*": "./dist/*"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "fmt": "prettier --write .",
+    "fmt:check": "prettier --check .",
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "graphql": "^16.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.10",
+    "prettier": "^3.3.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.3"
+  },
+  "files": [
+    "dist"
+  ],
+  "prettier": {
+    "semi": false,
+    "singleQuote": true,
+    "endOfLine": "lf"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/webpod/graphql-megaera.git"
+  },
+  "keywords": [
+    "graphql",
+    "typescript",
+    "generator"
+  ],
+  "author": "Anton Medvedev <anton@medv.io>",
+  "license": "MIT",
+  "homepage": "https://github.com/webpod/graphql-megaera"
+}
