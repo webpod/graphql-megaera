@@ -2,7 +2,8 @@
 
 <p align="center">
   <img src=".github/graphql-megaera.svg" width="220" alt="GraphQL Megaera"><br>
-  <strong>GraphQL TypeScript Generator</strong>
+  <strong>GraphQL TypeScript Generator</strong><br><br>
+  <a href="https://www.npmjs.com/package/megaera"><img src="https://badgen.net/npm/v/megaera" alt="npm"></a> <a href="https://github.com/webpod/graphql-megaera/actions/workflows/test.yml"><img src="https://github.com/webpod/graphql-megaera/actions/workflows/test.yml/badge.svg?branch=main" alt="test"></a>
 </p>
 
 ## Example
