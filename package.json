@@ -1,15 +1,19 @@
 {
   "name": "megaera",
-  "version": "0.0.0",
+  "version": "0.0.2",
   "description": "GraphQL TypeScript Generator",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "megaera": "./dist/cli.js"
+  },
   "scripts": {
     "fmt": "prettier --write .",
     "fmt:check": "prettier --check .",
     "build": "tsc",
-    "test": "vitest"
+    "test": "vitest",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "graphql": "^16.0.0"

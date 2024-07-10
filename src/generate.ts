@@ -32,7 +32,7 @@ export type ${f.name} = ${generateSelector(f, 0, true)}
     code.push(`export const ${q.name} = \`#graphql
 ${querySource}\` as string & ${q.name}
 
-export type ${q.name} = (${generateVariables(q.variables)}) => ${generateSelector(q)}
+export type ${q.name} = (${generateVariables(q.variables)}) => ${generateSelector(q, 0, true)}
 `)
   }
 
@@ -106,7 +106,7 @@ function generateInlineFragments(s: Selector, depth: number) {
   let code = ''
   let nullable = false
   for (const fragment of s.inlineFragments) {
-    code += ' | ' + generateSelector(fragment, depth + 1, true)
+    code += ' & ' + generateSelector(fragment, depth + 1, true)
     nullable ||= isNullableType(fragment.type)
   }
   return code + (nullable ? ' | null' : '')
