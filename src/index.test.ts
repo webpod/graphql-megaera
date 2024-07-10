@@ -88,7 +88,9 @@ test('mutations', () => {
     }
   `)
   const code = transpile(schema, source)
-  expect(code).includes('type CreateUser = (vars: { name: string, avatarUrl?: string | null }) =>')
+  expect(code).includes(
+    'type CreateUser = (vars: { name: string, avatarUrl?: string | null }) =>',
+  )
 })
 
 test('fragments', () => {
@@ -104,7 +106,7 @@ test('fragments', () => {
     }
   `)
   const code = transpile(schema, source)
-  expect(code).includes('name: string | null')
+  expect(code).includes('name: string | null\n')
   expect(code).includes('type UserName = {\n  name: string | null\n}\n')
 })
 
@@ -121,7 +123,9 @@ test('fragments with variables', () => {
     }
   `)
   const code = transpile(schema, source)
-  expect(code).includes('const UserName = \`#graphql\nfragment UserName on Query')
+  expect(code).includes(
+    'const UserName = `#graphql\nfragment UserName on Query',
+  )
 })
 
 test('inline interfaces', () => {
@@ -143,7 +147,7 @@ test('inline interfaces', () => {
     }
   `)
   const code = transpile(schema, source)
-  expect(code).includes('__typename: string')
-  expect(code).includes('barks: boolean | null')
-  expect(code).includes('meows: boolean | null')
+  expect(code).includes('__typename: unknown\n')
+  expect(code).includes('barks: boolean | null\n')
+  expect(code).includes('meows: boolean | null\n')
 })

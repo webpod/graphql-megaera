@@ -4,7 +4,7 @@ import {
   isListType,
   isNonNullType,
   isNullableType,
-  isScalarType
+  isScalarType,
 } from 'graphql/type/definition.js'
 import { Content, Selector, Variable } from './visitor.js'
 import { isObjectType } from 'graphql/type/index.js'
@@ -26,7 +26,7 @@ export type ${f.name} = ${generateSelector(f, 0, true)}
 
     let querySource = q.source
     for (const f of content.fragments) {
-      querySource = querySource.replace('...' + f.name, '${' + f.name + '}')
+      querySource = '${' + f.name + '}\n' + querySource
     }
 
     code.push(`export const ${q.name} = \`#graphql
@@ -54,61 +54,62 @@ function generateVariables(variables?: Variable[]) {
   )
 }
 
-function generateSelector(s: Selector, depth = 0, nonNull = false) {
+function generateSelector(s: Selector, depth = 0, nonNull = false): string {
+  if (s.fields.length === 0 && s.inlineFragments.length === 0) {
+    return generateType(s.type)
+  }
+
+  return (
+    generateArray(s, depth) +
+    (isNullableType(s.type) && !nonNull ? ' | null' : '')
+  )
+}
+
+function generateArray(s: Selector, depth: number): string {
+  const code =
+    generateFields(s, depth) +
+    generateFragments(s) +
+    generateInlineFragments(s, depth - 1)
+  return isListType(s.type) ? 'Array<' + code + '>' : code
+}
+
+function generateFragments(s: Selector): string {
+  let code = ''
+  for (const fragment of s.fields) {
+    if (!fragment.isFragment) continue
+    code += ' & ' + fragment.name
+  }
+  return code
+}
+
+function generateFields(s: Selector, depth: number): string {
+  const nonFragmentFields = s.fields.filter((f) => !f.isFragment)
+  if (nonFragmentFields.length === 0) {
+    return '{}'
+  }
+
   const code: string[] = []
-  if (s.fields.length > 0) {
-    let open = '{'
-    let close = '}'
-    if (isListType(s.type)) {
-      open = 'Array<{'
-      close = '}>'
-    }
-    code.push(open)
-
-    for (const field of s.fields) {
-      if (field.isFragment) continue
-
-      code.push(
-        '  '.repeat(depth + 1) +
+  code.push('{')
+  for (const field of nonFragmentFields) {
+    code.push(
+      '  '.repeat(depth + 1) +
         field.name +
         ': ' +
-        generateSelector(field, depth + 1)
-      )
-    }
-
-    let fragments = ''
-    for (const fragment of s.fields) {
-      if (!fragment.isFragment) continue
-      fragments += ' & ' + fragment.name
-    }
-
-    let inlineFragments = ''
-    if (s.inlineFragments.length > 0) {
-      inlineFragments = generateInlineFragments(s.inlineFragments, depth - 1)
-    }
-
-    let orNull = ''
-    if (isNullableType(s.type) && !nonNull) {
-      orNull = ' | null'
-    }
-
-    code.push('  '.repeat(depth) + fragments + inlineFragments + close + orNull)
-  } else if (s.inlineFragments.length > 0) {
-    code.push(generateInlineFragments(s.inlineFragments, depth))
-  } else {
-    code.push(generateType(s.type))
+        generateSelector(field, depth + 1),
+    )
   }
+  code.push('  '.repeat(depth) + '}')
   return code.join('\n')
 }
 
-function generateInlineFragments(inlineFragments: Selector[], depth: number) {
-  // TODO: inline common fragments fields for better TypeScript definition.
-  // TODO: deduplicate "| null" from different inline fragments.
+function generateInlineFragments(s: Selector, depth: number) {
   let code = ''
-  for (const fragment of inlineFragments) {
-    code += '\n' + '  '.repeat(depth + 1) + '| (' + generateSelector(fragment, depth + 1) + ')'
+  let nullable = false
+  for (const fragment of s.inlineFragments) {
+    code += ' | ' + generateSelector(fragment, depth + 1, true)
+    nullable ||= isNullableType(fragment.type)
   }
-  return code
+  return code + (nullable ? ' | null' : '')
 }
 
 export function generateType(t?: GraphQLType, orNull = ' | null'): string {
