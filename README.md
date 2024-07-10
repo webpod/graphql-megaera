@@ -134,7 +134,18 @@ Import generated code in your TypeScript file:
 ```ts
 import { IssuesQuery } from './query.graphql.js'
 
-const { issues } = await octokit.graphql<ReturnType<IssuesQuery>>(IssuesQuery)
+// Use ReturnType to get the result type of the query.
+type Result = ReturnType<IssuesQuery>
+
+// IssuesQuery is a string with GraphQL query.
+typeof IssuesQuery === 'string'
+```
+
+```ts
+// Use Variables to get the variables type of the query.
+import { Variables } from 'megaera'
+
+type InputVariables = Variables<IssuesQuery>
 ```
 
 ## FAQ
