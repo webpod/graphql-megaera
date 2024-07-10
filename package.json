@@ -9,7 +9,7 @@
     "fmt": "prettier --write .",
     "fmt:check": "prettier --check .",
     "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest"
   },
   "dependencies": {
     "graphql": "^16.0.0"
@@ -17,8 +17,8 @@
   "devDependencies": {
     "@types/node": "^20.14.10",
     "prettier": "^3.3.2",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.5.3"
+    "typescript": "^5.5.3",
+    "vitest": "^2.0.1"
   },
   "files": [
     "dist"

@@ -1,57 +1,149 @@
-import * as assert from 'node:assert/strict'
-import { describe, it } from 'node:test'
-import { parse, Source } from 'graphql/language/index.js'
-import { transform } from './visitor.js'
+import { test, expect } from 'vitest'
+import { Source } from 'graphql/language/index.js'
 import { buildSchema } from 'graphql/utilities/index.js'
-import { generate } from './generate.js'
+import { transpile } from './index.js'
 
 const schema = buildSchema(`
-schema {
-  query: Query
-  mutation: Mutation
-}
-
-type Query {
-  User(login: String!): User
-}
-
-type User {
-  name: String
-  avatarUrl: String
-}
-
-type Mutation {
-  CreateUser(name: String!, avatarUrl: String!): User
-}
+  schema {
+    query: Query
+    mutation: Mutation
+  }
+  
+  type Query {
+    User(login: String!): User
+  }
+  
+  type User {
+    name: String
+    avatarUrl: String
+    favoriteAnimal: Animal
+  }
+  
+  type Mutation {
+    CreateUser(name: String, avatarUrl: String!): User
+  }
+  
+  union Animal = User | Dog
+  
+  type Dog {
+    name: String
+    barks: Boolean
+  }
+  
+  type Cat {
+    name: String
+    meows: Boolean
+  }
 `)
 
-describe('index', () => {
-  it('simple query', () => {
-    const source = new Source(`
-query User {
-  user(login: "antonmedv") {
-    name
-    avatar: avatarUrl
-  }
-}
-`)
-    const code = generate(transform(source, schema))
-    assert.equal(
-      code,
-      `export type User = {
-  name: string
-  avatar: string
-}
+test('optional variable with default value', () => {
+  const source = new Source(`
+    query User($login: String! = "antonmedv") {
+      user(login: $login) {
+        name
+      }
+    }
+  `)
+  const code = transpile(schema, source)
+  expect(code).includes('type User = (vars: { login?: string })')
+})
 
-export const User = \`#graphql
-query User {
-  user(login: "antonmedv") {
-    name
-    avatar: avatarUrl
-  }
-}
-\` as string & User
-`,
-    )
-  })
+test('optional variable with nullable type', () => {
+  const source = new Source(`
+    query User($login: String) {
+      user(login: $login) {
+        name
+      }
+    }
+  `)
+  const code = transpile(schema, source)
+  expect(code).includes('type User = (vars: { login?: string | null })')
+})
+
+test('multiple queries', () => {
+  const source = new Source(`
+    query User1 {
+      user(login: "anton") {
+        name
+      }
+    }
+
+    query User2 {
+      user(login: "anna") {
+        name
+      }
+    }
+  `)
+  const code = transpile(schema, source)
+  expect(code).includes('type User1')
+  expect(code).includes('type User2')
+})
+
+test('mutations', () => {
+  const source = new Source(`
+    mutation CreateUser($name: String!, $avatarUrl: String) {
+      createUser(name: $name, avatarUrl: $avatarUrl) {
+        name
+      }
+    }
+  `)
+  const code = transpile(schema, source)
+  expect(code).includes('type CreateUser = (vars: { name: string, avatarUrl?: string | null }) =>')
+})
+
+test('fragments', () => {
+  const source = new Source(`
+    fragment UserName on User {
+      name
+    }
+  
+    query User {
+      user(login: "antonmedv") {
+        ...UserName
+      }
+    }
+  `)
+  const code = transpile(schema, source)
+  expect(code).includes('name: string | null')
+  expect(code).includes('type UserName = {\n  name: string | null\n}\n')
+})
+
+test('fragments with variables', () => {
+  const source = new Source(`
+    query User($login: String!) {
+      ...UserName 
+    }
+    
+    fragment UserName on Query {
+      user(login: $login) {
+        name
+      }
+    }
+  `)
+  const code = transpile(schema, source)
+  expect(code).includes('const UserName = \`#graphql\nfragment UserName on Query')
+})
+
+test('inline interfaces', () => {
+  const source = new Source(`
+    query User {
+      user(login: "antonmedv") {
+        favoriteAnimal {
+          __typename
+          ...on Dog {
+            name
+            barks
+          }
+          ...on Cat {
+            name
+            meows
+          }
+        }
+      }
+    }
+  `)
+  const code = transpile(schema, source)
+  expect(code).includes('__typename: string')
+  expect(code).includes('barks: boolean | null')
+  expect(code).includes('meows: boolean | null')
 })

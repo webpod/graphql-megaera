@@ -1,35 +1,17 @@
-import { buildSchema } from 'graphql/utilities/index.js'
-import { parse, Source } from 'graphql/language/index.js'
+import { Source } from 'graphql/language/index.js'
 import { generate } from './generate.js'
-import { transform } from './visitor.js'
+import { traverse } from './visitor.js'
+import { GraphQLSchema } from 'graphql/type/index.js'
 
-const schema = buildSchema(`
-schema {
-  query: Query
-  mutation: Mutation
+// Transpile a GraphQL schema and source to a TypeScript file.
+export function transpile(schema: GraphQLSchema, source: Source) {
+  return generate(traverse(schema, source))
 }
 
-type Query {
-  User(login: String!): User
-}
+// Query is a GraphQL query string with type information attached.
+// Parameters of the query are the variables. The return type is the
+// result of the query.
+export type Query = string & ((vars: any) => any)
 
-type User {
-  name: String
-  avatarUrl: String
-}
-
-type Mutation {
-  CreateUser(name: String!, avatarUrl: String): User
-}
-`)
-
-const source = new Source(`
-query User($login: String!, $avatarUrl: String) {
-  user(login: $login) {
-    name
-    avatarUrl
-  }
-}
-`)
-
-console.log(generate(transform(source, schema)))
+// Variables of a query are the first parameter of the query function.
+export type Variables<T extends Query> = Parameters<T>[0]
