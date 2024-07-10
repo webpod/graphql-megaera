@@ -1,6 +1,9 @@
-# GraphQL Megaera – GraphQL to TypeScript generator
+# GraphQL Megaera
 
-<p align="center"><img src=".github/graphql-megaera.svg" width="220" alt="GraphQL Megaera"></p>
+<p align="center">
+  <img src=".github/graphql-megaera.svg" width="220" alt="GraphQL Megaera"><br>
+  <strong>GraphQL TypeScript Generator</strong>
+</p>
 
 <table>
 <tr>
