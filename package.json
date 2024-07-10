@@ -1,6 +1,6 @@
 {
   "name": "megaera",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "GraphQL TypeScript Generator",
   "type": "module",
   "main": "./dist/index.js",
