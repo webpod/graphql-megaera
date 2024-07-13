@@ -269,6 +269,18 @@ const firstIssue: Issue = query(IssuesQuery).issues.nodes[0]
 
 </details>
 
+<details>
+<summary><strong>Can Megaera extract queries from `.ts` files?</strong></summary>
+
+No. To simplify development of Megaera, it is only possible to extract queries
+from `.graphql` files.
+
+But it should be possible to create plugins for webpack, rollup, or other
+bundlers that can extract queries from `.ts` files. If you are interested in
+this, please open an issue.
+
+</details>
+
 ## License
 
 [MIT](LICENSE)
