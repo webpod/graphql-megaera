@@ -150,7 +150,8 @@ type InputVariables = Variables<IssuesQuery>
 
 ## FAQ
 
-### Why query string is copied to TypeScript file as well?
+<details>
+<summary><strong>Why query string is copied to TypeScript file as well?</strong></summary>
 
 To make it easier to import queries in TypeScript projects. As well to connect
 generated output types with query source code.
@@ -173,7 +174,10 @@ function query<T extends Query>(query: T, variables?: Variables<T>) {
 const { issues } = await query(IssuesQuery, { login: 'webpod' })
 ```
 
-### Does Megaera support fragments?
+</details>
+
+<details>
+<summary><strong>Does Megaera support fragments?</strong></summary>
 
 Yes, Megaera fully supports fragments. Fragments are generated as separate types,
 and can be used independently.
@@ -205,6 +209,9 @@ import { Issue, IssuesQuery } from './query.graphql.js'
 
 const firstIssue: Issue = query(IssuesQuery).issues.nodes[0]
 ```
+
+</details>
+
 
 ## License
 
