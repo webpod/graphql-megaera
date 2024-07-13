@@ -8,7 +8,7 @@
 
 ## Example
 
-<table>
+<table align="center">
 <tr>
   <th>From GraphQL</th>
   <th>To TypeScript</th>
@@ -83,7 +83,7 @@ type IssuesQuery = () => {
         totalCount: number
         nodes: Array<{
           name: string
-        }> 
+        }>
       }
       body: string
       comments: {
@@ -129,26 +129,41 @@ npm install megaera
 megaera --schema=schema.graphql ./src/**/*.graphql
 ```
 
-Import generated code in your TypeScript file:
-
-```ts
-import { IssuesQuery } from './query.graphql.js'
-
-// Use ReturnType to get the result type of the query.
-type Result = ReturnType<IssuesQuery>
-
-// IssuesQuery is a string with GraphQL query.
-typeof IssuesQuery === 'string'
-```
-
-```ts
-// Use Variables to get the variables type of the query.
-import { Variables } from 'megaera'
-
-type InputVariables = Variables<IssuesQuery>
-```
+Megaera will generate TypeScript code for all queries in the specified files.
 
 ## FAQ
+
+<details>
+<summary><strong>How to use Megaera?</strong></summary>
+
+Put your queries in `.graphql` files, and run `megaera` to generate TypeScript code from them.
+
+Megaera will copy the query string to the generated TypeScript file, so you can
+import it in your TypeScript code.
+
+```ts
+import { IssuesQuery } from './query.graphql.ts'
+````
+
+The `IssuesQuery` variable is a string with the GraphQL query. You can use it
+directly in your code, or pass it to a function that accepts a query.
+
+Also, `IssuesQuery` carries the type of the query, so you can use it to infer
+the return type of the query, and the types of the input variables.
+
+```ts
+type Result = ReturnType<IssuesQuery>
+```
+
+> [!NOTE]
+> The generated TypeScript code will have a type `IssuesQuery` that can be used
+> independently:
+> 
+> ```ts
+> import type { IssuesQuery } from './query.graphql.ts'
+> ```
+
+</details>
 
 <details>
 <summary><strong>Why query string is copied to TypeScript file as well?</strong></summary>
@@ -163,15 +178,15 @@ For example, wrap [Octokit](https://github.com/octokit/octokit.js) in a function
 that accepts a query and returns the result:
 
 ```ts
-import { Query, Variables } from 'megaera'
-import { IssuesQuery } from './query.graphql.js'
+import {Query, Variables} from 'megaera'
+import {IssuesQuery} from './query.graphql.js'
 
 function query<T extends Query>(query: T, variables?: Variables<T>) {
   return octokit.graphql<ReturnType<T>>(query, variables)
 }
 
 // Return type, and types of variables are inferred from the query.
-const { issues } = await query(IssuesQuery, { login: 'webpod' })
+const {issues} = await query(IssuesQuery, {login: 'webpod'})
 ```
 
 </details>
@@ -205,13 +220,12 @@ fragment Issue on Issue {
 The generated TypeScript code will have a type `Issue` that can be used independently:
 
 ```ts
-import { Issue, IssuesQuery } from './query.graphql.js'
+import {Issue, IssuesQuery} from './query.graphql.js'
 
 const firstIssue: Issue = query(IssuesQuery).issues.nodes[0]
 ```
 
 </details>
-
 
 ## License
 
