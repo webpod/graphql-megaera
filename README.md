@@ -155,13 +155,55 @@ the return type of the query, and the types of the input variables.
 type Result = ReturnType<IssuesQuery>
 ```
 
-> [!NOTE]
-> The generated TypeScript code will have a type `IssuesQuery` that can be used
-> independently:
-> 
-> ```ts
-> import type { IssuesQuery } from './query.graphql.ts'
-> ```
+The type `IssuesQuery` can also be used independently:
+
+```ts
+import type { IssuesQuery } from './query.graphql.ts'
+```
+
+</details>
+
+<details>
+<summary><strong>How to get the return type of a query?</strong></summary>
+
+Megaera generates TypeScript types for queries as functions. 
+
+```ts
+type UserQuery = (vars: { login?: string }) => {
+  user: {
+    login: string
+    avatarUrl: string
+    name: string
+  }
+}
+```
+
+To get the return type of a query, use the `ReturnType` utility type:
+
+```ts
+type Result = ReturnType<UserQuery>
+```
+
+</details>
+
+<details>
+<summary><strong>How to get the types of the variables of a query?</strong></summary>
+
+The first parameter of the query function is the variables.
+
+You can use TypeScript's `Parameters` utility type to get the types of the variables:
+
+```ts
+type Variables = Parameters<UserQuery>[0]
+```
+
+Or you can use the `Variables` utility type to get the types of the variables:
+
+```ts
+import { Variables } from 'megaera'
+
+type Variables = Variables<UserQuery>
+```
 
 </details>
 
@@ -178,8 +220,8 @@ For example, wrap [Octokit](https://github.com/octokit/octokit.js) in a function
 that accepts a query and returns the result:
 
 ```ts
-import {Query, Variables} from 'megaera'
-import {IssuesQuery} from './query.graphql.js'
+import { Query, Variables } from 'megaera'
+import { IssuesQuery } from './query.graphql.ts'
 
 function query<T extends Query>(query: T, variables?: Variables<T>) {
   return octokit.graphql<ReturnType<T>>(query, variables)
@@ -220,7 +262,7 @@ fragment Issue on Issue {
 The generated TypeScript code will have a type `Issue` that can be used independently:
 
 ```ts
-import {Issue, IssuesQuery} from './query.graphql.js'
+import { Issue, IssuesQuery } from './query.graphql.ts'
 
 const firstIssue: Issue = query(IssuesQuery).issues.nodes[0]
 ```
