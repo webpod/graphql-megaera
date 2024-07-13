@@ -36,7 +36,7 @@ export type ${q.name} = (${generateVariables(q.variables)}) => ${generateSelecto
 `)
   }
 
-  return code.join('\n\n')
+  return code.join('\n')
 }
 
 function generateVariables(variables?: Variable[]) {

@@ -5,8 +5,13 @@ import * as os from 'node:os'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { buildSchema } from 'graphql/utilities/index.js'
-import { transpile } from './index.js'
 import { Source } from 'graphql/language/index.js'
+import { GraphQLSchema } from 'graphql/type/index.js'
+import { GraphQLError } from 'graphql/error/index.js'
+import { styleText } from 'node:util'
+import { traverse } from './visitor.js'
+import { generate } from './generate.js'
+import { plural } from './utils.js'
 
 void (async function main() {
   let schemaFileOrUrl: string | undefined
@@ -53,19 +58,65 @@ void (async function main() {
   schemaFileOrUrl = homeDirExpand(schemaFileOrUrl)
   inputFiles = inputFiles.map((f) => homeDirExpand(f))
 
-  const schema = buildSchema(fs.readFileSync(schemaFileOrUrl, 'utf-8'))
+  let schemaSource: string
+  if (/https?:\/\//.test(schemaFileOrUrl)) {
+    const headers = new Headers()
+    if (process.env.GITHUB_TOKEN) {
+      const token = process.env.GITHUB_TOKEN
+      headers.set('Authorization', `Bearer ${token}`)
+    }
+    const using = headers.has('Authorization') ? ` using $GITHUB_TOKEN` : ``
+    console.log(`Fetching schema from ${schemaFileOrUrl}${using}.`)
+    schemaSource = await fetch(schemaFileOrUrl, { headers }).then((r) =>
+      r.text(),
+    )
+  } else {
+    schemaSource = fs.readFileSync(schemaFileOrUrl, 'utf-8')
+  }
+
+  let schema: GraphQLSchema
+  try {
+    schema = buildSchema(schemaSource)
+  } catch (e) {
+    console.error(
+      styleText(['bgRed', 'whiteBright', 'bold'], `Failed to parse schema`),
+    )
+    throw e
+  }
+
   for (let inputFile of inputFiles) {
-    console.log(`Processing ${inputFile}...`)
     const dirName = path.dirname(inputFile)
     const fileName = path.basename(inputFile)
+
+    console.log(`Processing ${inputFile}`)
+
     const source = new Source(fs.readFileSync(inputFile, 'utf-8'), fileName)
-    let code = transpile(schema, source)
-    code =
-      `// DO NOT EDIT. Instead of this file, edit "${fileName}" and rerun megaera".\n\n` +
-      code
-    fs.writeFileSync(path.join(dirName, fileName + '.ts'), code)
+    const content = traverse(schema, source)
+    const code = generate(content)
+
+    const ops = plural(
+      content.operations.length,
+      '%d operation',
+      '%d operations',
+    )
+    const frg = plural(content.fragments.length, '%d fragment', '%d fragments')
+    console.log(`> ${styleText('green', 'done')} (${ops}, ${frg})`)
+
+    const prefix = `// DO NOT EDIT. This is a generated file. Instead of this file, edit "${fileName}".\n\n`
+    fs.writeFileSync(
+      path.join(dirName, fileName + '.ts'),
+      prefix + code,
+      'utf-8',
+    )
   }
-})()
+})().catch((e) => {
+  if (e instanceof GraphQLError) {
+    console.error(e.toString())
+    process.exitCode = 1
+  } else {
+    throw e
+  }
+})
 
 function usage() {
   console.log(`Usage: megaera [options] <input-files...>`)
