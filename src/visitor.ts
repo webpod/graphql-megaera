@@ -1,5 +1,13 @@
-import { GraphQLNonNull, GraphQLOutputType, GraphQLType, isNonNullType } from 'graphql/type/definition.js'
-import { typeFromAST, TypeInfo, visitWithTypeInfo } from 'graphql/utilities/index.js'
+import {
+  GraphQLOutputType,
+  GraphQLType,
+  isNonNullType,
+} from 'graphql/type/definition.js'
+import {
+  typeFromAST,
+  TypeInfo,
+  visitWithTypeInfo,
+} from 'graphql/utilities/index.js'
 import { parse, print, Source, visit } from 'graphql/language/index.js'
 import { GraphQLSchema } from 'graphql/type/index.js'
 import { GraphQLError } from 'graphql/error/index.js'
@@ -23,7 +31,7 @@ export type Selector = {
 
 export type Content = {
   operations: Selector[]
-  fragments: Selector[]
+  fragments: Map<string, Selector>
 }
 
 export function traverse(schema: GraphQLSchema, source: Source): Content {
@@ -32,19 +40,19 @@ export function traverse(schema: GraphQLSchema, source: Source): Content {
 
   const content: Content = {
     operations: [],
-    fragments: []
+    fragments: new Map(),
   }
 
   const stack: Selector[] = []
 
   const visitor = visitWithTypeInfo(typeInfo, {
     OperationDefinition: {
-      enter: function(node) {
+      enter: function (node) {
         if (node.name === undefined) {
           throw new GraphQLError(
             firstLetterUpper(node.operation) + ' name is required',
             node,
-            source
+            source,
           )
         }
         checkUnique(node.name.value, content)
@@ -55,7 +63,7 @@ export function traverse(schema: GraphQLSchema, source: Source): Content {
           variables.push({
             name: v.variable.name.value,
             type: type,
-            required: v.defaultValue === undefined && isNonNullType(type)
+            required: v.defaultValue === undefined && isNonNullType(type),
           })
         }
 
@@ -65,7 +73,7 @@ export function traverse(schema: GraphQLSchema, source: Source): Content {
           fields: [],
           inlineFragments: [],
           variables: variables,
-          source: print(node)
+          source: print(node),
         }
 
         stack.push(s)
@@ -73,7 +81,7 @@ export function traverse(schema: GraphQLSchema, source: Source): Content {
       },
       leave() {
         stack.pop()
-      }
+      },
     },
 
     FragmentDefinition: {
@@ -85,15 +93,15 @@ export function traverse(schema: GraphQLSchema, source: Source): Content {
           type: typeInfo.getType() ?? undefined,
           fields: [],
           inlineFragments: [],
-          source: print(node)
+          source: print(node),
         }
 
         stack.push(s)
-        content.fragments.push(s)
+        content.fragments.set(s.name, s)
       },
       leave() {
         stack.pop()
-      }
+      },
     },
 
     Field: {
@@ -109,7 +117,7 @@ export function traverse(schema: GraphQLSchema, source: Source): Content {
       },
       leave() {
         stack.pop()
-      }
+      },
     },
 
     FragmentSpread: {
@@ -121,13 +129,17 @@ export function traverse(schema: GraphQLSchema, source: Source): Content {
           fields: [],
           inlineFragments: [],
         })
-      }
+      },
     },
 
     InlineFragment: {
       enter(node) {
         if (!node.typeCondition) {
-          throw new GraphQLError('Inline fragment must have type condition.', node, source)
+          throw new GraphQLError(
+            'Inline fragment must have type condition.',
+            node,
+            source,
+          )
         }
         const s: Selector = {
           name: node.typeCondition.name.value,
@@ -141,7 +153,7 @@ export function traverse(schema: GraphQLSchema, source: Source): Content {
       leave() {
         stack.pop()
       },
-    }
+    },
   })
 
   visit(ast, visitor)
@@ -153,7 +165,7 @@ function checkUnique(name: string, content: Content) {
   if (content.operations.find((o) => o.name === name)) {
     throw new GraphQLError(`Operation with name "${name}" is already defined.`)
   }
-  if (content.fragments.find((f) => f.name === name)) {
+  if (content.fragments.has(name)) {
     throw new GraphQLError(`Fragment with name "${name}" is already defined.`)
   }
 }

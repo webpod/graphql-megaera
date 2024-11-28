@@ -99,7 +99,7 @@ void (async function main() {
       '%d operation',
       '%d operations',
     )
-    const frg = plural(content.fragments.length, '%d fragment', '%d fragments')
+    const frg = plural(content.fragments.size, '%d fragment', '%d fragments')
     console.log(`> ${styleText('green', 'done')} (${ops}, ${frg})`)
 
     const prefix = `// DO NOT EDIT. This is a generated file. Instead of this file, edit "${fileName}".\n\n`

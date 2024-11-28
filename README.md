@@ -143,7 +143,7 @@ import it in your TypeScript code.
 
 ```ts
 import { IssuesQuery } from './query.graphql.ts'
-````
+```
 
 The `IssuesQuery` variable is a string with the GraphQL query. You can use it
 directly in your code, or pass it to a function that accepts a query.
@@ -166,7 +166,7 @@ import type { IssuesQuery } from './query.graphql.ts'
 <details>
 <summary><strong>How to get the return type of a query?</strong></summary>
 
-Megaera generates TypeScript types for queries as functions. 
+Megaera generates TypeScript types for queries as functions.
 
 ```ts
 type UserQuery = (vars: { login?: string }) => {
@@ -228,7 +228,7 @@ function query<T extends Query>(query: T, variables?: Variables<T>) {
 }
 
 // Return type, and types of variables are inferred from the query.
-const {issues} = await query(IssuesQuery, {login: 'webpod'})
+const { issues } = await query(IssuesQuery, { login: 'webpod' })
 ```
 
 </details>

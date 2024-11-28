@@ -29,7 +29,9 @@ function getFieldType(name: string, fieldName: string) {
   if (!isObjectType(type)) {
     throw new Error(`${name} is not object type.`)
   }
-  const field = type.astNode?.fields?.find((f) => f.name.value === fieldName)?.type
+  const field = type.astNode?.fields?.find(
+    (f) => f.name.value === fieldName,
+  )?.type
   if (!field) {
     throw new Error(`Cannot find ${fieldName} field in ${name}.`)
   }

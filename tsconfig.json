@@ -7,7 +7,7 @@
     "strict": true,
     "outDir": "./dist",
     "declaration": true,
-    "allowJs": true,
+    "allowJs": true
   },
   "include": ["./src/**/*"]
 }

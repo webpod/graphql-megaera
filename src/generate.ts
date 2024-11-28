@@ -11,7 +11,7 @@ import { isObjectType } from 'graphql/type/index.js'
 
 export function generate(content: Content) {
   const code: string[] = []
-  for (const f of content.fragments) {
+  for (const f of content.fragments.values()) {
     code.push(`const ${f.name} = \`#graphql
 ${f.source}\`
 
@@ -25,8 +25,9 @@ export type ${f.name} = ${generateSelector(f, 0, true)}
     }
 
     let querySource = q.source
-    for (const f of content.fragments) {
-      querySource = '${' + f.name + '}\n' + querySource
+
+    for (const fName of usedFragments(q, content)) {
+      querySource = '${' + fName + '}\n' + querySource
     }
 
     code.push(`export const ${q.name} = \`#graphql
@@ -37,6 +38,25 @@ export type ${q.name} = (${generateVariables(q.variables)}) => ${generateSelecto
   }
 
   return code.join('\n')
+}
+
+function usedFragments(q: Selector, content: Content): string[] {
+  const fragments: string[] = []
+  for (const field of q.fields) {
+    if (field.isFragment) {
+      fragments.push(field.name)
+      const fragment = content.fragments.get(field.name)
+      if (!fragment) {
+        throw new Error(`Fragment ${field.name} is not defined.`)
+      }
+      fragments.push(...usedFragments(fragment, content))
+    }
+    fragments.push(...usedFragments(field, content))
+  }
+  for (const inlineFragment of q.inlineFragments) {
+    fragments.push(...usedFragments(inlineFragment, content))
+  }
+  return fragments
 }
 
 function generateVariables(variables?: Variable[]) {
