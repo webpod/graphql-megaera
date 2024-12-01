@@ -1,4 +1,5 @@
 import {
+  GraphQLOutputType,
   GraphQLType,
   isEnumType,
   isListType,
@@ -79,18 +80,23 @@ function generateSelector(s: Selector, depth = 0, nonNull = false): string {
     return generateType(s.type)
   }
 
-  return (
-    generateArray(s, depth) +
-    (isNullableType(s.type) && !nonNull ? ' | null' : '')
-  )
-}
-
-function generateArray(s: Selector, depth: number): string {
   const code =
     generateFields(s, depth) +
     generateFragments(s) +
     generateInlineFragments(s, depth - 1)
-  return isListType(s.type) ? 'Array<' + code + '>' : code
+
+  if (isNonNullType(s.type)) {
+    return wrapInArray(s.type.ofType, code)
+  }
+
+  return (
+    wrapInArray(s.type, code) +
+    (isNullableType(s.type) && !nonNull ? ' | null' : '')
+  )
+}
+
+function wrapInArray(t: GraphQLOutputType | undefined, code: string) {
+  return isListType(t) ? `Array<${code}>` : code
 }
 
 function generateFragments(s: Selector): string {

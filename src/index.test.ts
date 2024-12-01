@@ -11,6 +11,8 @@ const schema = buildSchema(`
   
   type Query {
     User(login: String!): User
+    Users: [User!]
+    NonNullUsers: [User!]!
   }
   
   type User {
@@ -150,4 +152,36 @@ test('inline interfaces', () => {
   expect(code).includes('__typename: unknown\n')
   expect(code).includes('barks: boolean | null\n')
   expect(code).includes('meows: boolean | null\n')
+})
+
+test('query with list', () => {
+  const source = new Source(`
+    query Nullable {
+      Users {
+        name
+      }
+    }
+  `)
+  const code = transpile(schema, source)
+  expect(code).includes(`{
+  Users: Array<{
+    name: string | null
+  }> | null
+}`)
+})
+
+test('query with non-null list', () => {
+  const source = new Source(`
+    query NonNullable {
+      NonNullUsers {
+        name
+      }
+    }
+  `)
+  const code = transpile(schema, source)
+  expect(code).includes(`{
+  NonNullUsers: Array<{
+    name: string | null
+  }>
+}`)
 })
